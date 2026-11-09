@@ -1,0 +1,39 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href= "{% static 'myapp/logIn.css' %}">
+    <title>Python</title>
+</head>
+<body>
+    <header>
+        <h1>PyLearn</h1>
+    </header>
+    <main>
+        <div class="log_in">
+            <h3>LogIn</h3>
+            <div class="margin">
+                <form>
+                    <input id="email" placeholder="you@email.com">
+                </form>
+                <p id='error'></p>
+                <button type='button' id= 'btn'>Log In</button>
+            </div>
+        </div>
+
+        <div class="sign_in">
+            <p>Don't have an account?</p>
+            <a href="{% url 'signin' %}">Sign In</a>
+        </div>
+    </main>
+
+    <footer>
+        PyLearn Tutorial
+    </footer>
+
+    <script src="{% static 'myapp/logIn.js' %}"></script>
+</body>
+</html>

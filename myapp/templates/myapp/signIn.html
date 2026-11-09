@@ -1,0 +1,46 @@
+{% load static %}
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href= "{% static 'myapp/signIn.css' %}">
+    <title>Python</title>
+  </head>
+  <body>
+    <header>
+      <h1>PyLearn</h1>
+    </header>
+
+    <main>
+      <div class="sign_up">
+        <h1>Sign Up</h1>
+        <form>
+          <div class="margin">
+            <div>
+              <input type="text" id="name" placeholder="Your Name" />
+            </div>
+
+            <div>
+              <input type="text" id="email" placeholder="you@gmail.com" />
+            </div>
+
+            <div class="btn" id="btn">
+              <button type = "button">Send Code</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="text">
+          <p>Already have an account?</p>
+          <a href= "{% url 'login' %}">LogIn</a>
+        </div>
+      </div>
+    </main>
+
+    <footer>PyLearn Tutorial</footer>
+
+    <script src="{% static 'myapp/signIn.js' %}"></script>
+  </body>
+</html>
