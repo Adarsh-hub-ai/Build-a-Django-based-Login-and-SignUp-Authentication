@@ -16,21 +16,22 @@
     <main>
       <div class="sign_up">
         <h1>Sign Up</h1>
-        <form>
+        <form id="signup-form" data-send-code-url="{% url 'send_otp' %}" data-code-page-url="{% url 'sendotp' %}">
           <div class="margin">
             <div>
-              <input type="text" id="name" placeholder="Your Name" />
+              <input type="text" id="name" name="name" placeholder="Your Name" maxlength="250" required />
             </div>
 
             <div>
-              <input type="text" id="email" placeholder="you@gmail.com" />
+              <input type="email" id="email" name="email" placeholder="you@gmail.com" maxlength="250" required />
             </div>
 
             <div class="btn" id="btn">
-              <button type = "button">Send Code</button>
+              <button type="submit">Send Code</button>
             </div>
           </div>
         </form>
+        <p id="signup-message" role="alert" aria-live="polite"></p>
 
         <div class="text">
           <p>Already have an account?</p>

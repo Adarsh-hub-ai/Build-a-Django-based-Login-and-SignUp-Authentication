@@ -59,6 +59,19 @@ main h3{
     background-color: #a47bfc;
 }
 
+#otp-code{
+    padding: 12px;
+    border: 1px solid #777;
+    border-radius: 5px;
+    font-size: 20px;
+    letter-spacing: 8px;
+    text-align: center;
+}
+
+#verify-message{
+    min-height: 1.2em;
+}
+
 .question{
     margin: auto;
 }

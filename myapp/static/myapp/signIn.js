@@ -1,41 +1,40 @@
-console.log('the file is running')
+const signupForm = document.getElementById('signup-form');
+const signupMessage = document.getElementById('signup-message');
+const submitButton = signupForm.querySelector('button[type="submit"]');
 
-const btn = document.getElementById('btn');
-const input_name = document.getElementById('name');
-const input_email = document.getElementById('email');
+signupForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    signupMessage.textContent = '';
+    submitButton.disabled = true;
 
-btn.addEventListener('click', function() {
-    getemail()
-    window.location.href = '/myapp/sendcode/'
-})
+    try {
+        const response = await fetch(signupForm.dataset.sendCodeUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': cookie('csrftoken'),
+            },
+            body: JSON.stringify({
+                name: document.getElementById('name').value,
+                email: document.getElementById('email').value,
+            }),
 
-
-function getemail() {
-    let name = input_name.value;
-    let email = input_email.value;
-
-    
-
-    fetch('/myapp/signin/', {
-        'method' : 'POST',
-        'headers' : {
-            'Content-Type' : 'application/json',
-            'X-CSRFToken' : cookie('csrftoken')
-        },
-        body : JSON.stringify({
-            name : name,
-            email : email
-        }) 
-})
-
-};
+        });
+        const result = await response.json();
+        if (!response.ok) {
+            throw new Error(result.error || 'Unable to start signup.');
+        }
+        window.location.href = signupForm.dataset.codePageUrl;
+    } catch (error) {
+        signupMessage.textContent = error.message || 'A network error occurred. Please try again.';
+        submitButton.disabled = false;
+    }
+});
 
 
 function cookie(name) {
-    let cookie = document.cookie
-    .split('; ')
-    .find(row => row.startsWith(name + '='))
-
-
-    return cookie ? decodeURIComponent(cookie.split('=')[1]) : null;
-};
+    const value = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith(`${name}=`));
+    return value ? decodeURIComponent(value.split('=').slice(1).join('=')) : '';
+}

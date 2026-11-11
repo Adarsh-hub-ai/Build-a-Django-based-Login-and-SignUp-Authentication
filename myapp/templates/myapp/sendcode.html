@@ -16,24 +16,19 @@
       <h3>Sign Up</h3>
       <div class="text">
         <h4>Verify your email</h4>
-        <p class="">We've sent a 6-digit verification code to your email</p>
-
-        <div class="otp-boxes">
-          <div class="box box-1"></div>
-          <div class="box box-2"></div>
-          <div class="box box-3"></div>
-          <div class="box box-4"></div>
-          <div class="box box-5"></div>
-          <div class="box box-6"></div>
-        </div>
-
-        <p class="question">Didn't receive the code? Resend Otp</p>
-
-        <button type="button">Verify Otp</button>
+        <p>Enter the 6-digit code sent to your email.</p>
+        <form id="verify-form" data-verify-url="{% url 'verify_otp' %}" data-resend-url="{% url 'send_otp' %}" data-login-url="{% url 'login' %}">
+          <label for="otp-code">Verification code</label>
+          <input id="otp-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required />
+          <button type="submit">Verify code</button>
+          <button id="resend-code" type="button">Resend code</button>
+        </form>
+        <p id="verify-message" role="status" aria-live="polite"></p>
       </div>
     </main>
     <footer>
       <p>PyLearn Tutorial</p>
     </footer>
+    <script src="{% static 'myapp/sendCode.js' %}"></script>
   </body>
 </html>
