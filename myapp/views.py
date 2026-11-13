@@ -102,6 +102,7 @@ def send_otp(request):
         if not isinstance(email, str):
             return JsonResponse({'error': 'A valid email address is required.'}, status=400)
         email = email.strip().lower()
+        
         try:
             validate_email(email)
         except ValidationError:
@@ -156,14 +157,17 @@ def verify_otp(request):
     if pending is None:
         request.session.pop('pending_signup_email', None)
         return JsonResponse({'error': 'Signup expired. Start again.'}, status=400)
+
     if pending.expires_at <= timezone.now():
         pending.delete()
         request.session.pop('pending_signup_email', None)
         return JsonResponse({'error': 'Code expired. Start signup again.'}, status=400)
+
     if pending.attempts >= 5:
         pending.delete()
         request.session.pop('pending_signup_email', None)
         return JsonResponse({'error': 'Too many incorrect attempts. Start signup again.'}, status=429)
+
     if not check_password(code, pending.otp_hash):
         pending.attempts += 1
         pending.save(update_fields=['attempts'])

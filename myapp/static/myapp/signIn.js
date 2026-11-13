@@ -20,7 +20,10 @@ signupForm.addEventListener('submit', async (event) => {
             }),
 
         });
+        
         const result = await response.json();
+        alert(result['message'])
+
         if (!response.ok) {
             throw new Error(result.error || 'Unable to start signup.');
         }
