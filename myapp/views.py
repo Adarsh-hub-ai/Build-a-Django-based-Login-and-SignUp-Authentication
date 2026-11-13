@@ -15,12 +15,14 @@ import json
 import re
 import secrets
 
+
 def index(request):
     return render(request, 'myapp/index.html')
 
 
 def python(request):
     return render(request, 'myapp/python.html')
+
 
 @ensure_csrf_cookie
 def login(request):
@@ -31,30 +33,27 @@ def login(request):
 
             if 'email' not in data:
                 return JsonResponse({
-                    'error' : 'Email is required'
-                }, status= 400)
+                    'error': 'Email is required'
+                }, status=400)
 
             email = data['email']
 
             if not email:
                 return JsonResponse({
-                    'error' : 'Email is required'
-                }, status= 400)
+                    'error': 'Email is required'
+                }, status=400)
 
-
-            user = SignIn.objects.filter(email= email).first()
+            user = SignIn.objects.filter(email=email).first()
 
             if user is None:
                 return JsonResponse({
-                    'error' : '*User doesnt exists'
-                }, status= 404)
-
+                    'error': '*User doesnt exists'
+                }, status=404)
 
         except json.JSONDecodeError:
             return JsonResponse({
-                'error' : 'Invalid json'
-            }, status= 400)
-            
+                'error': 'Invalid json'
+            }, status=400)
 
     return render(request, 'myapp/logIn.html')
 
@@ -63,8 +62,6 @@ def login(request):
 @require_GET
 def signin(request):
     return render(request, 'myapp/signIn.html')
-
-
 
 
 def sendotp(request):
@@ -93,6 +90,7 @@ def send_otp(request):
             request.session.pop('pending_signup_email', None)
             return JsonResponse({'error': 'Signup expired. Start again.'}, status=400)
         name, email = pending.name, pending.email
+
     else:
         name = data.get('name')
         email = data.get('email')
@@ -110,7 +108,7 @@ def send_otp(request):
             return JsonResponse({'error': 'Enter a valid email address.'}, status=400)
 
         if SignIn.objects.filter(email__iexact=email).exists():
-            return JsonResponse({'error': 'An account with this email already exists.'}, status=409)
+            return JsonResponse({'error': 'Email already exists.'}, status=409)
 
     otp = str(secrets.randbelow(900000) + 100000)
     pending, _ = PendingSignup.objects.update_or_create(
@@ -181,10 +179,3 @@ def verify_otp(request):
 
     request.session.pop('pending_signup_email', None)
     return JsonResponse({'message': 'Email verified. Signup complete.'})
-    
-
-
-
-
-
-
