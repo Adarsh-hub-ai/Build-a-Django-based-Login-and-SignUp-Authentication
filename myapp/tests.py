@@ -7,7 +7,7 @@ from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from .models import PendingSignup
+from .models import PendingLogin, PendingSignup, SignIn
 
 
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
@@ -46,6 +46,32 @@ class SignupRequestTests(TestCase):
         message = mail.outbox[0]
         self.assertEqual(message.to, ['asha@example.com'])
         code_match = re.search(r'\b(\d{6})\b', message.body)
+        self.assertIsNotNone(code_match)
+        self.assertTrue(check_password(code_match.group(1), pending.otp_hash))
+
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
+class LoginOtpRequestTests(TestCase):
+    def setUp(self):
+        SignIn.objects.create(name='Asha', email='asha@example.com')
+
+    def test_login_request_sends_code_for_existing_account(self):
+        response = self.client.post(
+            reverse('login'),
+            data=json.dumps({'email': 'asha@example.com'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['message'], 'Verification code sent.')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['asha@example.com'])
+        self.assertEqual(self.client.session['pending_login_email'], 'asha@example.com')
+
+        pending = PendingLogin.objects.get(email='asha@example.com')
+        self.assertGreater(pending.expires_at, timezone.now())
+        self.assertEqual(pending.attempts, 0)
+        code_match = re.search(r'\b(\d{6})\b', mail.outbox[0].body)
         self.assertIsNotNone(code_match)
         self.assertTrue(check_password(code_match.group(1), pending.otp_hash))
 

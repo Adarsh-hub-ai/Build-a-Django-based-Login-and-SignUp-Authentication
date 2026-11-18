@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from .models import SignIn, PendingSignup
+from .models import SignIn, PendingSignup, PendingLogin
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_GET, require_POST
 from django.contrib.auth.hashers import check_password, make_password
@@ -22,37 +22,54 @@ def index(request):
 def python(request):
     return render(request, 'myapp/python.html')
 
-
 @ensure_csrf_cookie
 def login(request):
-
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
-
-            if 'email' not in data:
-                return JsonResponse({
-                    'error': 'Email is required'
-                }, status=400)
-
-            email = data['email']
-
-            if not email:
-                return JsonResponse({
-                    'error': 'Email is required'
-                }, status=400)
-
-            user = SignIn.objects.filter(email=email).first()
-
-            if user is None:
-                return JsonResponse({
-                    'error': '*User doesnt exists'
-                }, status=404)
-
         except json.JSONDecodeError:
-            return JsonResponse({
-                'error': 'Invalid json'
-            }, status=400)
+            return JsonResponse({'error': 'Invalid JSON.'}, status=400)
+
+        if not isinstance(data, dict):
+            return JsonResponse({'error': 'Expected a JSON object.'}, status=400)
+
+        email = data.get('email')
+        if not isinstance(email, str) or not email.strip():
+            return JsonResponse({'error': 'Email is required.'}, status=400)
+        email = email.strip().lower()
+        try:
+            validate_email(email)
+        except ValidationError:
+            return JsonResponse({'error': 'Enter a valid email address.'}, status=400)
+
+        if not SignIn.objects.filter(email__iexact=email).exists():
+            return JsonResponse({'error': 'No account exists for this email.'}, status=404)
+
+        otp = str(secrets.randbelow(900000) + 100000)
+        try:
+            send_mail(
+                subject='Your PyLearn login code',
+                message=f'Your PyLearn login code is {otp}. It expires in 5 minutes.',
+                from_email=None,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception:
+            return JsonResponse({'error': 'Unable to send the login code. Please try again.'}, status=503)
+
+        PendingLogin.objects.update_or_create(
+            email=email,
+            defaults={
+                'otp_hash': make_password(otp),
+                'expires_at': timezone.now() + timedelta(minutes=5),
+                'attempts': 0,
+            },
+        )
+        request.session['pending_login_email'] = email
+        return JsonResponse({'message': 'Verification code sent.'})
+
+    if request.method != 'GET':
+        return JsonResponse({'error': 'Method not allowed.'}, status=405)
 
     return render(request, 'myapp/logIn.html')
 

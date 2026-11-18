@@ -11,6 +11,13 @@ class PendingSignup(models.Model):
     expires_at = models.DateTimeField()
     attempts = models.PositiveIntegerField(default=0)
 
+
+class PendingLogin(models.Model):
+    email = models.EmailField(max_length=250, unique=True)
+    otp_hash = models.CharField(max_length=128)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveIntegerField(default=0)
+
     
 
     
