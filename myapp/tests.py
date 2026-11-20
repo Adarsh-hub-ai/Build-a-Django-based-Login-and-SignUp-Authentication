@@ -1,7 +1,8 @@
 import json
 import re
+from datetime import timedelta
 
-from django.contrib.auth.hashers import check_password
+from django.contrib.auth.hashers import check_password, make_password
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -49,7 +50,6 @@ class SignupRequestTests(TestCase):
         self.assertIsNotNone(code_match)
         self.assertTrue(check_password(code_match.group(1), pending.otp_hash))
 
-
 @override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend')
 class LoginOtpRequestTests(TestCase):
     def setUp(self):
@@ -75,3 +75,24 @@ class LoginOtpRequestTests(TestCase):
         self.assertIsNotNone(code_match)
         self.assertTrue(check_password(code_match.group(1), pending.otp_hash))
 
+    def test_valid_login_code_creates_session_and_removes_pending_code(self):
+        PendingLogin.objects.create(
+            email='asha@example.com',
+            otp_hash=make_password('123456'),
+            expires_at=timezone.now() + timedelta(minutes=5),
+        )
+        session = self.client.session
+        session['pending_login_email'] = 'asha@example.com'
+        session.save()
+
+        response = self.client.post(
+            reverse('verify_login_otp'),
+            data=json.dumps({'code': '123456'}),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['message'], 'Login successful.')
+        self.assertEqual(self.client.session['user_email'], 'asha@example.com')
+        self.assertNotIn('pending_login_email', self.client.session)
+        self.assertFalse(PendingLogin.objects.filter(email='asha@example.com').exists())

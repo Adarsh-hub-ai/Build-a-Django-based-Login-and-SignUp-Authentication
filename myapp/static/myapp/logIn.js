@@ -1,46 +1,60 @@
-const btn = document.getElementById('btn')
-const input_email = document.getElementById('email')
+const loginFlow = document.getElementById('login-flow');
+const loginForm = document.getElementById('login-form');
+const verifyForm = document.getElementById('verify-login-form');
+const errorMessage = document.getElementById('error');
 
+loginForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    errorMessage.textContent = '';
 
+    try {
+        const response = await fetch(loginFlow.dataset.requestUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': cookie('csrftoken'),
+            },
+            body: JSON.stringify({ email: document.getElementById('email').value }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to send login code.');
 
-btn.addEventListener('click', function() {
-    login()
-})
+        errorMessage.textContent = result.message;
+        loginForm.hidden = true;
+        verifyForm.hidden = false;
+        document.getElementById('code').focus();
+    } catch (error) {
+        errorMessage.textContent = error.message || 'A network error occurred. Please try again.';
+    }
+});
 
+verifyForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    errorMessage.textContent = '';
 
-function login(){
-    let email = input_email.value
+    try {
+        const response = await fetch(loginFlow.dataset.verifyUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': cookie('csrftoken'),
+            },
+            body: JSON.stringify({ code: document.getElementById('code').value }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || 'Unable to verify login code.');
 
-    fetch('/myapp/login/', {
-        'method' : 'POST',
-        'headers' : {
-            'Content-Type' : 'application/json',
-            'X-CsrfToken' : cookie('csrftoken')
-        },
+        errorMessage.textContent = result.message;
+        verifyForm.hidden = true;
+    } catch (error) {
+        errorMessage.textContent = error.message || 'A network error occurred. Please try again.';
+    }
+});
 
-        body : JSON.stringify({
-            email : email
-        })
-    })
+function cookie(name) {
+    const value = document.cookie
+        .split(';')
+        .find((row) => row.trim().startsWith(`${name}=`));
 
-    .then(response => {
-        return response.json()
-
-    })
-
-    .then(data => {
-        if (data.error){
-            document.getElementById('error').textContent = data.error
-        }
-    })
-}
-
-
-function cookie(name){
-    let cookie = document.cookie
-    .split(';')
-    .find(row => row.startsWith(name + '='))
-
-
-    return cookie ? decodeURIComponent(cookie.split('=')[1]) : null
+    return value ? decodeURIComponent(value.split('=')[1]) : null;
 }

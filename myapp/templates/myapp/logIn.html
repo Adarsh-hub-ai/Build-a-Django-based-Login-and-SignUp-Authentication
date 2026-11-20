@@ -15,12 +15,20 @@
     <main>
         <div class="log_in">
             <h3>LogIn</h3>
-            <div class="margin">
-                <form>
-                    <input id="email" placeholder="you@email.com">
+            <div class="margin" id="login-flow"
+                 data-request-url="{% url 'login' %}"
+                 data-verify-url="{% url 'verify_login_otp' %}">
+                <form id="login-form">
+                    <input id="email" type="email" placeholder="you@email.com" required>
+                    <button type="submit" id="btn">Send login code</button>
                 </form>
-                <p id='error'></p>
-                <button type='button' id= 'btn'>Log In</button>
+                <form id="verify-login-form" hidden>
+                    <label for="code">Enter the 6-digit code emailed to you</label>
+                    <input id="code" inputmode="numeric" autocomplete="one-time-code"
+                           pattern="[0-9]{6}" maxlength="6" required>
+                    <button type="submit" id="verify-btn">Verify and log in</button>
+                </form>
+                <p id="error" role="status" aria-live="polite"></p>
             </div>
         </div>
 

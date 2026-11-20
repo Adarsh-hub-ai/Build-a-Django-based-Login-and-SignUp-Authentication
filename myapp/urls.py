@@ -9,5 +9,6 @@ urlpatterns = [
     path('sendcode/', views.sendotp, name='sendotp'),
     path('api/signup/send-code/', views.send_otp, name='send_otp'),
     path('api/signup/verify-code/', views.verify_otp, name='verify_otp'),
+    path('api/login/verify-code/', views.verify_login_otp, name='verify_login_otp'),
 
 ]

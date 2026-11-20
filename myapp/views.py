@@ -199,3 +199,73 @@ def verify_otp(request):
 
     request.session.pop('pending_signup_email', None)
     return JsonResponse({'message': 'Email verified. Signup complete.'})
+
+
+@require_POST
+def verify_login_otp(request):
+    email = request.session.get('pending_login_email')
+    if not email:
+        return JsonResponse({
+            'error' : 'Start login again. Session expired'
+        }, status = 400) 
+
+    try:
+        data = json.loads(request.body)
+
+    except json.JSONDecodeError:
+        return JsonResponse({
+            'error' : 'Invalid Json'
+        }, status = 400)
+
+    if not isinstance(data, dict):
+        return JsonResponse({
+            'error' : 'Expected a Json object'
+        }, status= 400)
+
+    code = data.get('code')
+    if not isinstance(code, str) or not re.fullmatch(r'\d{6}', code):
+        return JsonResponse({
+            'error' : 'Enter the 6-digit verification code'
+        }, status = 400)
+
+    pending = PendingLogin.objects.filter(email= email).first()
+    if pending is None:
+        request.session.pop('pending_login_email', None)
+        return JsonResponse({
+            'error' : 'Login code not found. Start login again.'
+        }, status = 400)
+
+    if pending.expires_at <= timezone.now():
+        pending.delete()
+        request.session.pop('pending_login_email', None)
+        return JsonResponse({
+            'error' : 'Code expired, resend the code'
+        }, status= 400)
+
+    if pending.attempts >= 5:
+        pending.delete()
+        request.session.pop('pending_login_email', None)
+        return JsonResponse({
+            'error' : 'Too many unsuccessfull attempts'
+        }, status = 400)
+
+    if not check_password(code, pending.otp_hash):
+        pending.attempts += 1
+        pending.save(update_fields=['attempts'])
+        return JsonResponse({
+            'error' : 'Incorrect verification code'
+        }, status= 400)
+
+    account = SignIn.objects.filter(email__iexact=email).first()
+    if account is None:
+        pending.delete()
+        request.session.pop('pending_login_email', None)
+        return JsonResponse({'error': 'Account not found. Start login again.'}, status=400)
+
+    pending.delete()
+    request.session.cycle_key()
+    request.session.pop('pending_login_email', None)
+    # SignIn is a project-specific model, not Django's auth User model.
+    # Store the authenticated identity in the session for PyLearn to use.
+    request.session['user_email'] = account.email
+    return JsonResponse({'message': 'Login successful.'})
